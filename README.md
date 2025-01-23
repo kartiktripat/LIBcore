@@ -1,6 +1,4 @@
-[# libcore
-Library management group project
-](https://i.postimg.cc/zXKC6ByK/lib.png
+https://i.postimg.cc/zXKC6ByK/lib.png
 
 ## Libcore - Library Management
 write the purpose of the library management and what makes this more beneficial for libraries to use.
