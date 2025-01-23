@@ -16,4 +16,3 @@ write the purpose of the library management and what makes this more beneficial 
 usage explanation here
 ```
 
-)
