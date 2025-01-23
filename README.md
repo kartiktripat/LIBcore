@@ -1,4 +1,4 @@
-![Logo](https://i.postimg.cc/zXKC6ByK/lib.png)
+![Logo](https://i.postimg.cc/Qdgq9tsh/libcore.png)
 
 ## Libcore - Library Management
 write the purpose of the library management and what makes this more beneficial for libraries to use.
