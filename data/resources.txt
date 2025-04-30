@@ -1,0 +1,3 @@
+R001,Introduction to Java,James Gosling,Programming,true
+R002,Data Structures and Algorithms,Robert Lafore,CS,true
+R003,Modern Operating Systems,Andrew Tanenbaum,Systems,true

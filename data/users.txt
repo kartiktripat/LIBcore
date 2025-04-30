@@ -1,0 +1,3 @@
+U001,jdoe,pass123,123 Main St,555-1234,STAFF
+U002,asmith,secure456,456 Oak Ave,555-5678,MEMBER
+U003,mtran,read789,789 Pine Ln,555-9012,MEMBER
