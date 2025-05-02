@@ -5,20 +5,27 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 
 public class MemberGUI {
+    // reference to the member client
     private MemberClient client;
+    // frame shown during login
     private JFrame loginFrame;
+    // main dashboard window
     private JFrame mainFrame;
-    private DefaultTableModel resourceTableModel;
-    private JTable resourceTable;
+    // area to display server messages
     private JTextArea messageArea;
-    private String borrowUserId;
-    private String borrowDate;
+    // panel for resource table and forms
+    private JPanel actionPanel;
+    // data model for the resource table
+    private DefaultTableModel resourceTableModel;
+    // table to display resources
+    private JTable resourceTable;
 
     public MemberGUI(MemberClient client) {
         this.client = client;
         showLoginWindow();
     }
 
+    // shows the login window to the member
     private void showLoginWindow() {
         loginFrame = new JFrame("Member Login - LIBcore");
         loginFrame.setSize(350, 200);
@@ -47,27 +54,30 @@ public class MemberGUI {
         loginFrame.setVisible(true);
     }
 
+    // shows the main dashboard for member users
     public void showMainWindow(String username) {
         loginFrame.dispose();
 
         mainFrame = new JFrame("LIBcore Member Dashboard - Welcome " + username);
-        mainFrame.setSize(900, 600);
+        mainFrame.setSize(1200, 500);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLayout(new BorderLayout());
 
         messageArea = new JTextArea();
         messageArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(messageArea);
 
         JPanel topButtonPanel = new JPanel(new FlowLayout());
         JButton logoutButton = new JButton("Logout");
         JButton viewResourcesButton = new JButton("View Resources");
         JButton returnResourceButton = new JButton("Return Resource");
-        JButton borrowResourceButton = new JButton("Borrow Resource");
 
         topButtonPanel.add(viewResourcesButton);
-        topButtonPanel.add(borrowResourceButton);
         topButtonPanel.add(returnResourceButton);
         topButtonPanel.add(logoutButton);
+
+        actionPanel = new JPanel();
+        actionPanel.setLayout(new BoxLayout(actionPanel, BoxLayout.Y_AXIS));
 
         logoutButton.addActionListener(e -> {
             client.sendMessage("LOGOUT");
@@ -76,121 +86,137 @@ public class MemberGUI {
         });
 
         viewResourcesButton.addActionListener(e -> {
+            clearActionPanel();
             setupResourceTable();
             client.sendMessage("VIEW_RESOURCES");
         });
 
-        borrowResourceButton.addActionListener(e -> showBorrowResourceForm());
         returnResourceButton.addActionListener(e -> showReturnResourceForm());
 
         mainFrame.add(topButtonPanel, BorderLayout.NORTH);
-        mainFrame.add(new JScrollPane(messageArea), BorderLayout.CENTER);
+        mainFrame.add(scrollPane, BorderLayout.CENTER);
+        mainFrame.add(actionPanel, BorderLayout.SOUTH);
         mainFrame.setVisible(true);
     }
 
+    // clears the action panel for new content
+    private void clearActionPanel() {
+        actionPanel.removeAll();
+        actionPanel.revalidate();
+        actionPanel.repaint();
+    }
+
+    // sets up and displays the resource table with double-click borrowing
     private void setupResourceTable() {
-        resourceTableModel = new DefaultTableModel(new String[]{"Resource ID", "Title", "Author", "Category", "Available"}, 0);
+        resourceTableModel = new DefaultTableModel(new String[]{"Resource ID", "Title", "Author", "Category", "Available"}, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         resourceTable = new JTable(resourceTableModel);
         JScrollPane tableScrollPane = new JScrollPane(resourceTable);
 
-        mainFrame.getContentPane().removeAll();
-        JPanel topButtonPanel = new JPanel(new FlowLayout());
-        JButton logoutButton = new JButton("Logout");
-        JButton viewResourcesButton = new JButton("View Resources");
-        JButton returnResourceButton = new JButton("Return Resource");
-        JButton borrowResourceButton = new JButton("Borrow Resource");
+        JLabel instructionLabel = new JLabel("Double-click a resource to borrow it.");
+        instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        topButtonPanel.add(viewResourcesButton);
-        topButtonPanel.add(borrowResourceButton);
-        topButtonPanel.add(returnResourceButton);
-        topButtonPanel.add(logoutButton);
+        actionPanel.removeAll();
+        actionPanel.add(instructionLabel);
+        actionPanel.add(tableScrollPane);
 
-        mainFrame.add(topButtonPanel, BorderLayout.NORTH);
-        mainFrame.add(tableScrollPane, BorderLayout.CENTER);
-        mainFrame.revalidate();
-        mainFrame.repaint();
+        resourceTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    int selectedRow = resourceTable.getSelectedRow();
+                    if (selectedRow >= 0) {
+                        String resourceId = (String) resourceTableModel.getValueAt(selectedRow, 0);
+                        String availability = (String) resourceTableModel.getValueAt(selectedRow, 4);
 
-        logoutButton.addActionListener(e -> {
-            client.sendMessage("LOGOUT");
-            mainFrame.dispose();
-            showLoginWindow();
-        });
+                        if ("false".equalsIgnoreCase(availability)) {
+                            JOptionPane.showMessageDialog(mainFrame, "This resource is not available for borrowing.", "Unavailable", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
 
-        viewResourcesButton.addActionListener(e -> {
-            setupResourceTable();
-            client.sendMessage("VIEW_RESOURCES");
-        });
+                        String userId = client.getUserId();
+                        String borrowDate = java.time.LocalDate.now().toString();
 
-        borrowResourceButton.addActionListener(e -> showBorrowResourceForm());
-        returnResourceButton.addActionListener(e -> showReturnResourceForm());
-    }
-
-    private void showBorrowResourceForm() {
-        borrowUserId = JOptionPane.showInputDialog("Enter User ID:");
-        borrowDate = JOptionPane.showInputDialog("Enter Borrow Date (YYYY-MM-DD):");
-
-        if (borrowUserId != null && borrowDate != null && !borrowUserId.isEmpty() && !borrowDate.isEmpty()) {
-            setupResourceTable();
-            client.sendMessage("VIEW_RESOURCES");
-
-            JButton confirmButton = new JButton("Confirm Borrow");
-            confirmButton.addActionListener(e -> {
-                int selectedRow = resourceTable.getSelectedRow();
-                if (selectedRow >= 0) {
-                    String resourceId = (String) resourceTableModel.getValueAt(selectedRow, 0);
-                    int result = JOptionPane.showConfirmDialog(mainFrame, "Confirm borrowing Resource ID: " + resourceId + "?", "Confirm Borrow", JOptionPane.YES_NO_OPTION);
-                    if (result == JOptionPane.YES_OPTION) {
-                        client.sendMessage("BORROW_RESOURCE," + borrowUserId + "," + resourceId + "," + borrowDate);
+                        resourceTableModel.setValueAt("false", selectedRow, 4);
+                        client.sendMessage("BORROW_RESOURCE," + userId + "," + resourceId + "," + borrowDate);
                         JOptionPane.showMessageDialog(mainFrame, "Resource borrowed successfully: " + resourceId);
-                        showMainWindow(borrowUserId);
                     }
-                } else {
-                    JOptionPane.showMessageDialog(mainFrame, "Please select a resource to borrow.");
                 }
-            });
-            mainFrame.add(confirmButton, BorderLayout.SOUTH);
-            mainFrame.revalidate();
-            mainFrame.repaint();
-        } else {
-            JOptionPane.showMessageDialog(mainFrame, "Borrow cancelled. Please enter valid details.");
-        }
+            }
+        });
+
+        actionPanel.revalidate();
+        actionPanel.repaint();
     }
 
+    // shows the form to return a resource
     private void showReturnResourceForm() {
+        clearActionPanel();
+
         JTextField userIdField = new JTextField(10);
         JTextField resourceIdField = new JTextField(10);
         JTextField timeField = new JTextField(10);
+        JButton submitButton = new JButton("Return resource");
 
         JPanel formPanel = new JPanel(new GridLayout(4, 2));
         formPanel.add(new JLabel("User ID:"));
         formPanel.add(userIdField);
         formPanel.add(new JLabel("Resource ID:"));
         formPanel.add(resourceIdField);
-        formPanel.add(new JLabel("Return Time (YYYY-MM-DD):"));
+        formPanel.add(new JLabel("Return time (YYYY-MM-DD):"));
         formPanel.add(timeField);
+        formPanel.add(new JLabel(""));
+        formPanel.add(submitButton);
 
-        int result = JOptionPane.showConfirmDialog(mainFrame, formPanel, "Return Resource", JOptionPane.OK_CANCEL_OPTION);
-
-        if (result == JOptionPane.OK_OPTION) {
+        submitButton.addActionListener(e -> {
             String userId = userIdField.getText();
             String resourceId = resourceIdField.getText();
             String returnTime = timeField.getText();
 
             if (!userId.isEmpty() && !resourceId.isEmpty() && !returnTime.isEmpty()) {
                 client.sendMessage("RETURN_RESOURCE," + userId + "," + resourceId + "," + returnTime);
-                JOptionPane.showMessageDialog(mainFrame, "Resource returned successfully.");
+                messageArea.setText("Resource returned successfully.");
+                clearActionPanel();
             } else {
                 JOptionPane.showMessageDialog(mainFrame, "Please fill all fields.");
             }
-        }
+        });
+
+        actionPanel.add(formPanel);
+        actionPanel.revalidate();
+        actionPanel.repaint();
     }
 
+    // handles incoming messages from the server
     public void displayServerMessage(String message) {
+        if (message.equals("SESSION_EXPIRED")) {
+            JOptionPane.showMessageDialog(null, "Session expired due to inactivity.");
+            mainFrame.dispose();
+            showLoginWindow();
+            return;
+        }
+
         if (message.startsWith("LOGIN_SUCCESS")) {
             String[] parts = message.split(",");
             String username = parts[1];
+            String role = parts[2];
+
+            if (!"member".equalsIgnoreCase(role)) {
+                JOptionPane.showMessageDialog(null, "Access denied. This window is for member users only.");
+                return;
+            }
+
             showMainWindow(username);
-        } else if (resourceTableModel != null && message.contains(",")) {
+        } else if (message.equals("LOGIN_FAILED")) {
+            JOptionPane.showMessageDialog(null, "Login failed. Invalid user id or password. Please try again.");
+        } else if (message.equals("RESOURCE_LIST")) {
+            if (resourceTableModel != null) {
+                resourceTableModel.setRowCount(0);
+            }
+        } else if (message.contains(",")) {
             String[] parts = message.split(",");
             if (parts.length >= 5) {
                 resourceTableModel.addRow(new Object[]{parts[0], parts[1], parts[2], parts[3], parts[4]});

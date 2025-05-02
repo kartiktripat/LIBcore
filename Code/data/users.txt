@@ -1,3 +1,4 @@
-U001,jdoe,pass123,123 Main St,555-1234,STAFF
-U002,asmith,secure456,456 Oak Ave,555-5678,MEMBER
-U003,mtran,read789,789 Pine Ln,555-9012,MEMBER
+KT,Kartik Tripathi,abcde,1792 Panda Way,510-925-8771,STAFF
+SL,Steven Le,12345,25800 Carlos Bee Blvd,510-748-3921,MEMBER
+AF,Alejandro Fernandez,6789,1901 Harder Road,510-932-1184,MEMBER
+TT,Thomas Tran,efghi,899 Blossom Ln,510-741-5509,MEMBER

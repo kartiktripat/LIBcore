@@ -12,6 +12,8 @@ import java.net.Socket;
 import java.util.List;
 
 public class ClientHandler extends Thread {
+    // handles communication with a single connected client
+
     private final Socket clientSocket;
     private final AuthenticationService authService;
     private final SessionManager sessionManager;
@@ -27,10 +29,28 @@ public class ClientHandler extends Thread {
 
     public void run() {
         try {
+            // input and output streams for communicating with the client
             in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
+            // background thread to check for session timeout
+            new Thread(() -> {
+                while (true) {
+                    try {
+                        Thread.sleep(10_000); // check every 10 seconds
+                        if (currentUserID != null && !sessionManager.isSessionActive(currentUserID)) {
+                            out.println("SESSION_EXPIRED");
+                            clientSocket.close(); // disconnect client
+                            break;
+                        }
+                    } catch (Exception e) {
+                        break;
+                    }
+                }
+            }).start();
+
             String inputLine;
+            // main loop: process commands sent by the client
             while ((inputLine = in.readLine()) != null) {
                 String[] tokens = inputLine.split(",");
                 String command = tokens[0];
@@ -38,30 +58,35 @@ public class ClientHandler extends Thread {
                 switch (command.toUpperCase()) {
                     case "LOGIN":
                         handleLogin(tokens);
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "LOGOUT":
                         handleLogout();
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "ADD_RESOURCE":
                         handleAddResource(tokens);
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "VIEW_RESOURCES":
                         handleViewResources();
-                        break;
-                    case "EXPORT_TRANSACTIONS":
-                        handleExportTransactions();
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "VIEW_USERS":
                         handleViewUsers();
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "VIEW_TRANSACTIONS":
                         handleViewTransactions();
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "RETURN_RESOURCE":
                         handleReturnResource(tokens);
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     case "BORROW_RESOURCE":
                         handleBorrowResource(tokens);
+                        sessionManager.refreshSession(currentUserID);
                         break;
                     default:
                         out.println("ERROR: Unknown command");
@@ -69,16 +94,17 @@ public class ClientHandler extends Thread {
                 }
             }
         } catch (IOException e) {
-            System.err.println("[SERVER] Client disconnected: " + e.getMessage());
+            System.err.println("[server] client disconnected: " + e.getMessage());
         } finally {
             try {
                 clientSocket.close();
             } catch (IOException e) {
-                System.err.println("[SERVER] Error closing connection: " + e.getMessage());
+                System.err.println("[server] error closing connection: " + e.getMessage());
             }
         }
     }
 
+    // handles login by validating credentials and starting a session
     private void handleLogin(String[] tokens) {
         if (tokens.length < 3) {
             out.println("ERROR: LOGIN requires userID and password");
@@ -98,6 +124,7 @@ public class ClientHandler extends Thread {
         }
     }
 
+    // handles logout and ends the user session
     private void handleLogout() {
         if (currentUserID != null) {
             sessionManager.endSession(currentUserID);
@@ -107,6 +134,7 @@ public class ClientHandler extends Thread {
         }
     }
 
+    // adds a new resource to the resource file
     private void handleAddResource(String[] tokens) {
         if (tokens.length < 5) {
             out.println("ERROR: ADD_RESOURCE requires 4 fields");
@@ -121,34 +149,24 @@ public class ClientHandler extends Thread {
         }
     }
 
+    // sends all resource records to the client
     private void handleViewResources() {
         try {
             List<String> resources = ResourceManager.getAllResources();
+            out.println("RESOURCE_LIST"); // signal gui to begin table update
             for (String r : resources) {
-                String[] parts = r.split(",");
-                if (parts.length >= 5 && parts[4].equalsIgnoreCase("true")) {
-                    out.println(r);
-                }
+                out.println(r);
             }
         } catch (IOException e) {
             out.println("ERROR: Could not read resources");
         }
     }
 
-    private void handleExportTransactions() {
-        try {
-            List<String> txns = TransactionManager.getAllTransactions();
-            for (String t : txns) {
-                out.println(t);
-            }
-        } catch (IOException e) {
-            out.println("ERROR: Could not export transactions");
-        }
-    }
-
+    // sends all user records to the client
     private void handleViewUsers() {
         try {
             List<String> users = UserManager.getAllUsers();
+            out.println("USER_LIST");
             for (String u : users) {
                 out.println(u);
             }
@@ -157,10 +175,20 @@ public class ClientHandler extends Thread {
         }
     }
 
+    // sends all transaction records to the client
     private void handleViewTransactions() {
-        handleExportTransactions();
+        try {
+            List<String> txns = TransactionManager.getAllTransactions();
+            out.println("TRANSACTION_LIST");
+            for (String t : txns) {
+                out.println(t);
+            }
+        } catch (IOException e) {
+            out.println("ERROR: Could not export transactions");
+        }
     }
 
+    // records a resource return and updates availability
     private void handleReturnResource(String[] tokens) {
         if (tokens.length < 4) {
             out.println("ERROR: RETURN_RESOURCE requires userID, resourceID, and return time");
@@ -181,6 +209,7 @@ public class ClientHandler extends Thread {
         }
     }
 
+    // records a resource borrowing and updates availability
     private void handleBorrowResource(String[] tokens) {
         if (tokens.length < 4) {
             out.println("ERROR: BORROW_RESOURCE requires userID, resourceID, and borrow time");
