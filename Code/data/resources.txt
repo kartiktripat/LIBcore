@@ -1,7 +1,7 @@
-R001,Introduction to Java,James Gosling,Programming,true
+R001,Introduction to Java,James Gosling,Programming,false
 R002,Data Structures and Algorithms,Robert Lafore,CS,false
 R003,Modern Operating Systems,Andrew Tanenbaum,Systems,true
-R004,Artificial Intelligence: A Modern Approach,Stuart Russell,AI,true
+R004,Artificial Intelligence: A Modern Approach,Stuart Russell,AI,false
 R005,Clean Code,Robert C. Martin,Software Engineering,true
 R006,Computer Networking: A Top-Down Approach,James Kurose,Networking,false
 R007,Design Patterns,Erich Gamma,Software Design,true
