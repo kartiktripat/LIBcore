@@ -125,7 +125,7 @@ Run StaffClient.java or MemberClient.java
 ---
 
 ## 📬 Contributions
-This project was developed by Kartik Tripathi, Steven Le, Alejandro Fernandez and Thomas Tran. Contributions, forks, and feedback are welcome.
+This project was developed by Kartik Tripathi. Contributions, forks, and feedback are welcome.
 
 ---
 
