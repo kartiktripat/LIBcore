@@ -2,7 +2,7 @@
 
 # LIBcore Library Management System
 
-## 📚 Purpose
+##  Purpose
 The LIBcore Library Management System is designed to streamline the way libraries manage book lending, user activity, and inventory. It replaces manual systems and spreadsheets with an interactive, multi-user networked application that makes library management easy, efficient, and scalable.
 
 This system is particularly beneficial to libraries because:
@@ -13,25 +13,25 @@ This system is particularly beneficial to libraries because:
 
 ---
 
-## ✨ Features
+##  Features
 
-### ✅ Book Search
+###  Book Search
 Users can view all available books in a clean tabular format with columns for ID, Title, Author, Category, and Availability.
 
-### ✅ Check Book Status
+###  Check Book Status
 Staff can see which books are currently checked out and which are in stock.
 
-### ✅ Late Check
+###  Late Check
 Automatically identifies books not returned by the due date and flags them as overdue.
 
-### ✅ GUI Dashboard
+###  GUI Dashboard
 - Built using `Swing`, the GUI is interactive and intuitive.
 - Members can browse, borrow, and return books easily.
 - Staff can manage resources, view user data, export transactions, and perform admin actions.
 
 ---
 
-## 🚀 Usage & Setup
+##  Usage & Setup
 
 ### 1. Clone the repository
 ```bash
@@ -78,7 +78,7 @@ Run StaffClient.java or MemberClient.java
 
 ---
 
-## 🧠 Code Explanation
+##  Code Explanation
 
 ### `ClientHandler.java`
 - Core server-side logic
@@ -111,20 +111,20 @@ Run StaffClient.java or MemberClient.java
 
 ---
 
-## 👥 User Roles
+##  User Roles
 - `STAFF`: Full access to resources and logs
 - `MEMBER`: Can only borrow/return/view books
 
 ---
 
-## 📌 Notes
+##  Notes
 - Uses plain `.txt` files instead of a DB for simplicity
 - Easily expandable to JDBC / MySQL / SQLite in the future
 - Fully object-oriented, modular design using Java and Swing
 
 ---
 
-## 📬 Contributions
+##  Contributions
 This project was developed by Kartik Tripathi and team. Contributions, forks, and feedback are welcome.
 
 ---
